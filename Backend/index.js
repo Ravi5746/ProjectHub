@@ -99,12 +99,20 @@ app.use((req, res) => {
 // ─── GLOBAL ERROR HANDLER ─────────────────────────────────────────────────────
 app.use(errorHandler)
 
-// ─── START SERVER ─────────────────────────────────────────────────────────────
+// ─── EXPORT FOR VERCEL ────────────────────────────────────────────────────────
+export default app
+
+// ─── START SERVER (Local/Railway only) ────────────────────────────────────────
 const PORT = process.env.PORT || 8080
 
-connectDB().then(() => {
-    app.listen(PORT, () => {
-        console.log(`🚀 ProjectHub API server running on port: ${PORT}`)
-        console.log(`   Health: http://localhost:${PORT}/api/v1/health`)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    connectDB().then(() => {
+        app.listen(PORT, () => {
+            console.log(`🚀 ProjectHub API server running on port: ${PORT}`)
+            console.log(`   Health: http://localhost:${PORT}/api/v1/health`)
+        })
+    }).catch(err => {
+        console.error("Failed to connect to DB:", err)
     })
-})
+}
+
