@@ -41,9 +41,13 @@ requiredEnvVars.forEach(v => {
 app.use(requestId)
 
 // 2. CORS
+const rawFrontendUrl = process.env.FRONTEND_URL || '';
+const frontendUrl = rawFrontendUrl.replace(/\/$/, ''); // Remove trailing slash
+
 const allowedOrigins = [
-    process.env.FRONTEND_URL,
+    frontendUrl,
     'http://localhost:5173',
+    'http://localhost:3000',
     'https://loving-peace-frontend.up.railway.app'
 ].filter(Boolean)
 
@@ -56,7 +60,10 @@ app.use(cors({
         // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true)
         
-        if (allowedOrigins.includes(origin) || !isProduction) {
+        // Clean the origin to ensure match
+        const cleanOrigin = origin.replace(/\/$/, '');
+        
+        if (allowedOrigins.includes(cleanOrigin) || !isProduction) {
             callback(null, true)
         } else {
             console.warn(`[CORS] Blocked origin: ${origin}. Expected one of: ${allowedOrigins.join(', ')}`)
@@ -65,7 +72,7 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }))
 
 // 3. Rate Limiting
