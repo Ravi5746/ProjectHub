@@ -138,17 +138,20 @@ app.use(errorHandler)
 // ─── EXPORT FOR VERCEL ────────────────────────────────────────────────────────
 export default app
 
-// ─── START SERVER (Local/Railway only) ────────────────────────────────────────
-const PORT = process.env.PORT || 8080
+// ─── START SERVER ─────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 8000
 
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+// On Vercel, we only export the app. On Railway/Local, we listen.
+if (!process.env.VERCEL) {
+    console.log('[STARTUP] Initializing database connection...')
     connectDB().then(() => {
         app.listen(PORT, () => {
             console.log(`🚀 ProjectHub API server running on port: ${PORT}`)
-            console.log(`   Health: http://localhost:${PORT}/api/v1/health`)
+            console.log(`   Environment: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`)
         })
     }).catch(err => {
-        console.error("Failed to connect to DB:", err)
+        console.error("❌ Fatal error during startup:", err)
+        process.exit(1)
     })
 }
 
