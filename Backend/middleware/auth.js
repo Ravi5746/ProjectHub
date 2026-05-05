@@ -1,38 +1,39 @@
 import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
-dotenv.config()
 
 const auth = async (req, res, next) => {
     try {
-        const token = req.cookies.accessToken || req.headers?.authorization?.split(' ')[1]
+        const token = req.cookies?.accessToken || req.header('Authorization')?.replace('Bearer ', '')
+        const origin = req.get('origin')
 
         if (!token) {
-            console.warn(`[AUTH] No token provided for ${req.method} ${req.originalUrl}`)
+            console.warn(`[AUTH] No token found for ${req.method} ${req.originalUrl} (Origin: ${origin})`)
+            console.log(`[AUTH] Cookies received: ${Object.keys(req.cookies || {}).join(', ') || 'NONE'}`)
             return res.status(401).json({
-                message: 'Access token not provided',
+                message: "Please login to continue",
                 error: true,
                 success: false
             })
         }
 
-        const decoded = jwt.verify(token, process.env.SECRET_KEY_ACCESS_TOKEN)
+        const decode = jwt.verify(token, process.env.SECRET_KEY_ACCESS_TOKEN)
 
-        if (!decoded) {
+        if (!decode) {
             return res.status(401).json({
-                message: 'Unauthorized access',
+                message: "Unauthorized access",
                 error: true,
                 success: false
             })
         }
 
-        req.userId = decoded.id
-        req.userRole = decoded.role
+        req.userId = decode.id
+        req.userRole = decode.role
+
         next()
 
     } catch (error) {
-        console.error(`[AUTH] Token verification failed: ${error.message}`)
+        console.error(`[AUTH] Error: ${error.message}`)
         return res.status(401).json({
-            message: error.message || 'Invalid or expired token',
+            message: error.message || "Invalid or expired token",
             error: true,
             success: false
         })
