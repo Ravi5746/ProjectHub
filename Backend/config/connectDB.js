@@ -57,8 +57,7 @@ async function connectDB() {
     } catch (error) {
         console.error('[connectDB] ❌ Prisma connection failed:', error.message)
         console.error('[connectDB] Stack Trace:', error.stack)
-        // Don't exit immediately in dev, let nodemon retry if it's a transient issue
-        // process.exit(1)
+        throw error // Re-throw to make it a fatal error during startup
     }
 }
 
