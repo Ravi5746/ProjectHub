@@ -123,6 +123,15 @@ app.use('/api/v1/projects', projectRouter)
 app.use('/api/v1/tasks', taskRouter)
 app.use('/api/v1/dashboard', dashboardRouter)
 
+// ─── ERROR HANDLERS ──────────────────────────────────────────────────────────
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+})
+
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err)
+})
+
 // ─── 404 HANDLER ─────────────────────────────────────────────────────────────
 app.use((req, res) => {
     res.status(404).json({
