@@ -17,7 +17,8 @@ import dashboardRouter from './routes/dashboard.routes.js'
 
 
 const app = express()
-const isProduction = process.env.NODE_ENV === 'production'
+const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT || !!process.env.VERCEL
+console.log(`[INIT] Running in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`)
 
 // Essential Env Vars Check
 const requiredEnvVars = [

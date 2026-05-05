@@ -7,6 +7,7 @@ const auth = async (req, res, next) => {
         const token = req.cookies.accessToken || req.headers?.authorization?.split(' ')[1]
 
         if (!token) {
+            console.warn(`[AUTH] No token provided for ${req.method} ${req.originalUrl}`)
             return res.status(401).json({
                 message: 'Access token not provided',
                 error: true,
@@ -29,6 +30,7 @@ const auth = async (req, res, next) => {
         next()
 
     } catch (error) {
+        console.error(`[AUTH] Token verification failed: ${error.message}`)
         return res.status(401).json({
             message: error.message || 'Invalid or expired token',
             error: true,

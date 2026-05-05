@@ -272,10 +272,11 @@ export async function loginController(req, res) {
 
         await updateUserById(user.id, { lastLoginDate: new Date() })
 
+        const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Strict'
+            secure: isProduction,
+            sameSite: isProduction ? 'None' : 'Lax'
         }
 
         res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 })       // 15 min
@@ -317,10 +318,11 @@ export async function logoutController(req, res) {
 
         await updateUserById(userId, { refreshToken: null })
 
+        const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Strict'
+            secure: isProduction,
+            sameSite: isProduction ? 'None' : 'Lax'
         }
 
         res.clearCookie('accessToken', cookieOptions)
@@ -378,10 +380,11 @@ export async function refreshTokenController(req, res) {
         const newAccessToken = generateAccessToken(user.id, user.role)
         const newRefreshToken = await generateRefreshToken(user.id)
 
+        const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Strict'
+            secure: isProduction,
+            sameSite: isProduction ? 'None' : 'Lax'
         }
 
         res.cookie('accessToken', newAccessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 })
