@@ -8,46 +8,47 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.join(__dirname, '../.env') })
 
-// Singleton: reuse the same client across hot reloads in dev
-const globalForPrisma = globalThis
+let prismaInstance = null;
+let poolInstance = null;
 
 function createPrismaClient() {
-    let pool;
+    if (prismaInstance) return prismaInstance;
 
-    if (process.env.DATABASE_URL) {
-        console.log('[connectDB] Using DATABASE_URL with MariaDB adapter')
-        // The mariadb driver requires the protocol to be 'mariadb://'
-        const connectionString = process.env.DATABASE_URL.replace('mysql://', 'mariadb://')
-        pool = mariadb.createPool(connectionString)
-    } else {
-        const config = {
-            host: process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
-            port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306'),
-            user: process.env.MYSQLUSER || process.env.MYSQL_USER || 'root',
-            password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || '',
-            database: process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'ProjectHub',
+    if (process.env.DATABASE_URL || process.env.MYSQLHOST) {
+        console.log('[connectDB] Initializing Prisma with MariaDB adapter')
+        
+        const config = process.env.DATABASE_URL 
+            ? process.env.DATABASE_URL.replace('mysql://', 'mariadb://')
+            : {
+                host: process.env.MYSQLHOST,
+                port: parseInt(process.env.MYSQLPORT || '3306'),
+                user: process.env.MYSQLUSER,
+                password: process.env.MYSQLPASSWORD,
+                database: process.env.MYSQLDATABASE,
+            };
+
+        // Add connection limits to prevent exhaustion
+        if (typeof config === 'string') {
+            // Append parameters to connection string if it's a string
+            const separator = config.includes('?') ? '&' : '?';
+            poolInstance = mariadb.createPool(`${config}${separator}connectionLimit=5&acquireTimeout=10000`);
+        } else {
+            config.connectionLimit = 5;
+            config.acquireTimeout = 10000;
+            poolInstance = mariadb.createPool(config);
         }
-        console.log(`[connectDB] Initializing with individual variables for user: ${config.user}`)
-        pool = mariadb.createPool(config)
+
+        const adapter = new PrismaMariaDb(poolInstance)
+        prismaInstance = new PrismaClient({ adapter })
+    } else {
+        console.log('[connectDB] No DB environment variables found. Using Prisma native.')
+        prismaInstance = new PrismaClient()
     }
 
-    try {
-        const adapter = new PrismaMariaDb(pool)
-        return new PrismaClient({
-            adapter,
-            log: ['query', 'info', 'warn', 'error'],
-        })
-    } catch (e) {
-        console.error('[connectDB] ❌ Failed to initialize Prisma with MariaDB adapter:', e.message)
-        throw e
-    }
+    return prismaInstance
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
-
-if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = prisma
-}
+export const prisma = createPrismaClient()
 
 async function connectDB() {
     try {

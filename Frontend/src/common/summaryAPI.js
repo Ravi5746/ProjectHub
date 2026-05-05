@@ -1,5 +1,5 @@
 const rawURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000"
-export const baseURL = rawURL.startsWith('http') ? rawURL : `https://${rawURL}`
+export const baseURL = (rawURL.startsWith('http') ? rawURL : `https://${rawURL}`).replace(/\/$/, "");
 
 const SummaryAPI = {
     // Auth
