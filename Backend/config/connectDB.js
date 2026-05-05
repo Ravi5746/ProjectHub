@@ -12,33 +12,31 @@ dotenv.config({ path: path.join(__dirname, '../.env') })
 const globalForPrisma = globalThis
 
 function createPrismaClient() {
-    // 1. If DATABASE_URL is provided, let Prisma handle it natively (Standard Production Way)
+    let pool;
+
     if (process.env.DATABASE_URL) {
-        console.log('[connectDB] Using DATABASE_URL for Prisma connection')
-        return new PrismaClient({
-            log: ['query', 'info', 'warn', 'error'],
-        })
+        console.log('[connectDB] Using DATABASE_URL with MariaDB adapter')
+        pool = mariadb.createPool(process.env.DATABASE_URL)
+    } else {
+        const config = {
+            host: process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
+            port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306'),
+            user: process.env.MYSQLUSER || process.env.MYSQL_USER || 'root',
+            password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || '',
+            database: process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'ProjectHub',
+        }
+        console.log(`[connectDB] Initializing with individual variables for user: ${config.user}`)
+        pool = mariadb.createPool(config)
     }
-
-    // 2. Fallback to individual variables with the MariaDB adapter
-    const config = {
-        host: process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
-        port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306'),
-        user: process.env.MYSQLUSER || process.env.MYSQL_USER || 'root',
-        password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || '',
-        database: process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'ProjectHub',
-    }
-
-    console.log(`[connectDB] DATABASE_URL not found. Initializing with individual variables for user: ${config.user}`)
 
     try {
-        const adapter = new PrismaMariaDb(config)
+        const adapter = new PrismaMariaDb(pool)
         return new PrismaClient({
             adapter,
             log: ['query', 'info', 'warn', 'error'],
         })
     } catch (e) {
-        console.error('[connectDB] ❌ Failed to initialize database adapter:', e.message)
+        console.error('[connectDB] ❌ Failed to initialize Prisma with MariaDB adapter:', e.message)
         throw e
     }
 }
