@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "build": "prisma generate",
+    "build": "DATABASE_URL=\"mysql://placeholder:placeholder@localhost:3306/placeholder\" prisma generate",
     "vercel-build": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
