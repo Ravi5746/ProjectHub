@@ -42,15 +42,19 @@ const allowedOrigins = [
     'https://loving-peace-frontend.up.railway.app'
 ].filter(Boolean)
 
+if (isProduction) {
+    console.log(`[CORS] Allowed Origins: ${allowedOrigins.join(', ')}`)
+}
+
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true)
         
-        if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        if (allowedOrigins.includes(origin) || !isProduction) {
             callback(null, true)
         } else {
-            console.error(`[CORS] Rejected origin: ${origin}`)
+            console.warn(`[CORS] Blocked origin: ${origin}. Expected one of: ${allowedOrigins.join(', ')}`)
             callback(new Error('Not allowed by CORS'))
         }
     },
