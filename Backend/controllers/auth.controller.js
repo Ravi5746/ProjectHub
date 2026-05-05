@@ -43,7 +43,7 @@ export async function signupController(req, res) {
 
         const salt = await bcryptjs.genSalt(12)
         const hashedPassword = await bcryptjs.hash(password, salt)
-        
+
         const otp = generateOtp()
         const verifyExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h
 
@@ -192,7 +192,7 @@ export async function resendVerifyEmailController(req, res) {
         const verifyExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
         const otp = generateOtp()
 
-        await updateUserById(user.id, { 
+        await updateUserById(user.id, {
             verifyEmailExpiry: verifyExpiry,
             verifyEmailOtp: String(otp)
         })
@@ -275,7 +275,7 @@ export async function loginController(req, res) {
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict'
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Strict'
         }
 
         res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 })       // 15 min
@@ -295,9 +295,9 @@ export async function loginController(req, res) {
             message: 'Login successful',
             error: false,
             success: true,
-            data: { 
-                accessToken, 
-                ...userData 
+            data: {
+                accessToken,
+                ...userData
             }
         })
 
@@ -320,7 +320,7 @@ export async function logoutController(req, res) {
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict'
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Strict'
         }
 
         res.clearCookie('accessToken', cookieOptions)
@@ -381,7 +381,7 @@ export async function refreshTokenController(req, res) {
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict'
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Strict'
         }
 
         res.cookie('accessToken', newAccessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 })

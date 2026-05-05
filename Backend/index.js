@@ -17,6 +17,19 @@ import dashboardRouter from './routes/dashboard.routes.js'
 
 
 const app = express()
+const isProduction = process.env.NODE_ENV === 'production'
+
+// Essential Env Vars Check
+const requiredEnvVars = [
+    'SECRET_KEY_ACCESS_TOKEN',
+    'SECRET_KEY_REFRESH_TOKEN',
+    'FRONTEND_URL'
+]
+requiredEnvVars.forEach(v => {
+    if (!process.env[v]) {
+        console.warn(`[WARNING] Missing essential environment variable: ${v}`)
+    }
+})
 
 // ─── MIDDLEWARE ORDER (per architecture) ──────────────────────────────────────
 // 1. Request ID
@@ -31,13 +44,19 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true)
+        
+        if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
             callback(null, true)
         } else {
+            console.error(`[CORS] Rejected origin: ${origin}`)
             callback(new Error('Not allowed by CORS'))
         }
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }))
 
 // 3. Rate Limiting
