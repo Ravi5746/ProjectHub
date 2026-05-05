@@ -16,7 +16,9 @@ function createPrismaClient() {
 
     if (process.env.DATABASE_URL) {
         console.log('[connectDB] Using DATABASE_URL with MariaDB adapter')
-        pool = mariadb.createPool(process.env.DATABASE_URL)
+        // The mariadb driver requires the protocol to be 'mariadb://'
+        const connectionString = process.env.DATABASE_URL.replace('mysql://', 'mariadb://')
+        pool = mariadb.createPool(connectionString)
     } else {
         const config = {
             host: process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
