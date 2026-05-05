@@ -17,6 +17,10 @@ import dashboardRouter from './routes/dashboard.routes.js'
 
 
 const app = express()
+
+// Trust proxy for Railway/Cloud Load Balancers (required for express-rate-limit)
+app.set('trust proxy', 1)
+
 const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT || !!process.env.VERCEL
 console.log(`[INIT] Running in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`)
 
