@@ -56,20 +56,7 @@ if (isProduction) {
 }
 
 app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl)
-        if (!origin) return callback(null, true)
-        
-        // Clean the origin to ensure match
-        const cleanOrigin = origin.replace(/\/$/, '');
-        
-        if (allowedOrigins.includes(cleanOrigin) || !isProduction) {
-            callback(null, true)
-        } else {
-            console.warn(`[CORS] Blocked origin: ${origin}. Expected one of: ${allowedOrigins.join(', ')}`)
-            callback(new Error('Not allowed by CORS'))
-        }
-    },
+    origin: true, // Allow all origins for troubleshooting
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
