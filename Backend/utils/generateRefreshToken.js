@@ -9,10 +9,8 @@ const generateRefreshToken = async (userId) => {
         { expiresIn: '7d' }
     )
 
-    await prisma.user.update({
-        where: { id: Number(userId) },
-        data: { refreshToken: token }
-    })
+    // Update: delegating DB persistence to the calling controller to minimize roundtrips
+    // await prisma.user.update({ ... })
 
     return token
 }

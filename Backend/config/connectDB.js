@@ -14,30 +14,29 @@ let poolInstance = null;
 function createPrismaClient() {
     if (prismaInstance) return prismaInstance;
 
-    if (process.env.DATABASE_URL || process.env.MYSQLHOST) {
+    if (process.env.MYSQLHOST || process.env.DATABASE_URL) {
         console.log('[connectDB] Initializing Prisma with MariaDB adapter')
         
-        const config = process.env.DATABASE_URL 
-            ? process.env.DATABASE_URL.replace('mysql://', 'mariadb://')
-            : {
+        let config;
+        if (process.env.MYSQLHOST) {
+            console.log('[connectDB] Using private networking (MYSQLHOST)')
+            config = {
                 host: process.env.MYSQLHOST,
                 port: parseInt(process.env.MYSQLPORT || '3306'),
                 user: process.env.MYSQLUSER,
                 password: process.env.MYSQLPASSWORD,
                 database: process.env.MYSQLDATABASE,
+                connectionLimit: 10,
+                acquireTimeout: 30000,
             };
-
-        // Add connection limits to prevent exhaustion
-        if (typeof config === 'string') {
-            // Append parameters to connection string if it's a string
-            const separator = config.includes('?') ? '&' : '?';
-            poolInstance = mariadb.createPool(`${config}${separator}connectionLimit=5&acquireTimeout=20000`);
         } else {
-            config.connectionLimit = 5;
-            config.acquireTimeout = 20000;
-            poolInstance = mariadb.createPool(config);
+            console.log('[connectDB] Using DATABASE_URL connection string')
+            const dbUrl = process.env.DATABASE_URL.replace('mysql://', 'mariadb://')
+            const separator = dbUrl.includes('?') ? '&' : '?';
+            config = `${dbUrl}${separator}connectionLimit=10&acquireTimeout=30000`;
         }
 
+        poolInstance = mariadb.createPool(config);
         const adapter = new PrismaMariaDb(poolInstance)
         prismaInstance = new PrismaClient({ adapter })
     } else {

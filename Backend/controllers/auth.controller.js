@@ -270,7 +270,11 @@ export async function loginController(req, res) {
         const accessToken = generateAccessToken(user.id, user.role)
         const refreshToken = await generateRefreshToken(user.id)
 
-        await updateUserById(user.id, { lastLoginDate: new Date() })
+        // Combined update for efficiency
+        await updateUserById(user.id, { 
+            lastLoginDate: new Date(),
+            refreshToken: refreshToken // Already done in generateRefreshToken but doing it here is fine if I modify generateRefreshToken
+        })
 
         const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT
         const cookieOptions = {
