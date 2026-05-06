@@ -231,8 +231,12 @@ export async function loginController(req, res) {
             })
         }
 
+        console.log(`[LOGIN] Start for email: ${email}`)
         const user = await findUserByEmail(email)
+        console.log(`[LOGIN] User found: ${!!user}`)
+
         if (!user) {
+            console.log(`[LOGIN] Failure: User not found`)
             return res.status(400).json({
                 message: 'Invalid email or password',
                 error: true,
@@ -240,6 +244,7 @@ export async function loginController(req, res) {
             })
         }
 
+        console.log(`[LOGIN] User status: ${user.status}`)
         if (user.status === 'UNVERIFIED') {
             return res.status(403).json({
                 message: 'Please verify your email before logging in. Check your inbox.',
@@ -258,7 +263,10 @@ export async function loginController(req, res) {
             })
         }
 
+        console.log(`[LOGIN] Comparing passwords...`)
         const isPasswordValid = await bcryptjs.compare(password, user.password)
+        console.log(`[LOGIN] Password valid: ${isPasswordValid}`)
+
         if (!isPasswordValid) {
             return res.status(400).json({
                 message: 'Invalid email or password',
@@ -267,15 +275,18 @@ export async function loginController(req, res) {
             })
         }
 
+        console.log(`[LOGIN] Generating tokens...`)
         const accessToken = generateAccessToken(user.id, user.role)
         const refreshToken = await generateRefreshToken(user.id)
 
+        console.log(`[LOGIN] Updating user record (lastLoginDate)...`)
         // Combined update for efficiency
         await updateUserById(user.id, { 
             lastLoginDate: new Date(),
-            refreshToken: refreshToken // Already done in generateRefreshToken but doing it here is fine if I modify generateRefreshToken
+            refreshToken: refreshToken
         })
 
+        console.log(`[LOGIN] Setting cookies...`)
         const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT
         const cookieOptions = {
             httpOnly: true,
@@ -283,8 +294,9 @@ export async function loginController(req, res) {
             sameSite: isProduction ? 'None' : 'Lax'
         }
 
-        res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 })       // 15 min
-        res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 }) // 7 days
+        res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 })
+        res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 })
+        console.log(`[LOGIN] Cookies set. Finalizing...`)
 
         const userData = {
             id: user.id,
