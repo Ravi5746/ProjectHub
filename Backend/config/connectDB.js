@@ -31,10 +31,10 @@ function createPrismaClient() {
         if (typeof config === 'string') {
             // Append parameters to connection string if it's a string
             const separator = config.includes('?') ? '&' : '?';
-            poolInstance = mariadb.createPool(`${config}${separator}connectionLimit=5&acquireTimeout=10000`);
+            poolInstance = mariadb.createPool(`${config}${separator}connectionLimit=5&acquireTimeout=20000`);
         } else {
             config.connectionLimit = 5;
-            config.acquireTimeout = 10000;
+            config.acquireTimeout = 20000;
             poolInstance = mariadb.createPool(config);
         }
 
